@@ -16,7 +16,8 @@ void process_output(const MD_CHAR *out,MD_SIZE size, void *userdata){
 	}
 	output_stream->write(out,size);
 }
-
+const unsigned int parser_flags=MD_FLAG_LATEXMATHSPANS |MD_FLAG_TABLES;
+const unsigned int render_flags=MD_HTML_FLAG_XHTML;
 int main(int argc,const char **argv){
 	if(argc<3){
 		std::cerr << "Usage: blgmd <input> <output>" << std::endl;
@@ -44,7 +45,7 @@ int main(int argc,const char **argv){
 	input_stream->seekg(0,std::ios::beg);
 	input_stream->read(&input_string[0],input_string.size());	
 
-	md_html(input_string.c_str(),input_string.size(),process_output,NULL,0,0);
+	md_html(input_string.c_str(),input_string.size(),process_output,NULL,parser_flags,render_flags);
 
 	
 	delete input_stream;
