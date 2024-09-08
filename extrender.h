@@ -31,8 +31,12 @@ struct MD_HTML_tag {
 };
 void render_verbatim(MD_HTML* r, const MD_CHAR* text, MD_SIZE size);
 
+
+extern char MATHML_DISPLAY;
+
 void highlight_code(MD_HTML* r, const MD_CHAR* data, MD_SIZE size);	
 void render_mathml(MD_HTML* r, const MD_CHAR* data, MD_SIZE size);	
+
 
 
 #ifdef __cplusplus

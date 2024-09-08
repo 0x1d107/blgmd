@@ -1,13 +1,20 @@
 #include "extrender.h"
 #include "itex-src/itex2MML.h"
 #include <cstring>
+#include <string>
+char MATHML_DISPLAY = 0;
 void render_mathml(MD_HTML *r, const MD_CHAR *text, MD_SIZE size){
-	if(!text){
+	if(!text||!size){
 		return;
 	}
-	char *mathml = itex2MML_parse(text,size);
+	std::string str;
+	if(MATHML_DISPLAY)
+		str = "$$" + std::string(text,size) + "$$";
+	else
+		str = "$" + std::string(text,size) + "$";
+	char *mathml = itex2MML_parse(str.c_str(),str.size());
 	if(!mathml){
-		render_verbatim(r,text,size);
+		render_verbatim(r,str.c_str(),str.size());
 		return;
 	}
 	render_verbatim(r,mathml,strlen(mathml));

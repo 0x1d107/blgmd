@@ -123,7 +123,10 @@ render_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
                     hex[2] = hex_chars[((unsigned)data[off] >> 0) & 0xf];
                     render_verbatim(r, hex, 3);
                     break;
-            }
+            }void push_detail(void *detail);
+void *top_detail();
+void pop_detail();
+
             off++;
         } else {
             break;
@@ -439,8 +442,8 @@ enter_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
         case MD_SPAN_IMG:               render_open_img_span(r, (MD_SPAN_IMG_DETAIL*) detail); break;
         case MD_SPAN_CODE:              RENDER_VERBATIM(r, "<code>"); break;
         case MD_SPAN_DEL:               RENDER_VERBATIM(r, "<del>"); break;
-        case MD_SPAN_LATEXMATH:         RENDER_VERBATIM(r, "<x-equation>"); break;
-        case MD_SPAN_LATEXMATH_DISPLAY: RENDER_VERBATIM(r, "<x-equation type=\"display\">"); break;
+        case MD_SPAN_LATEXMATH:         RENDER_VERBATIM(r, "<x-equation>");MATHML_DISPLAY=0; break;
+        case MD_SPAN_LATEXMATH_DISPLAY: RENDER_VERBATIM(r, "<x-equation type=\"display\">");MATHML_DISPLAY=1; break;
         case MD_SPAN_WIKILINK:          render_open_wikilink_span(r, (MD_SPAN_WIKILINK_DETAIL*) detail); break;
     }
 

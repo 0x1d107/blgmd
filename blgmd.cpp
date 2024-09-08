@@ -19,12 +19,15 @@ void process_output(const MD_CHAR *out,MD_SIZE size, void *userdata){
 const unsigned int parser_flags=MD_FLAG_LATEXMATHSPANS |MD_FLAG_TABLES;
 const unsigned int render_flags=MD_HTML_FLAG_XHTML;
 int main(int argc,const char **argv){
-	if(argc<3){
+	if(argc<2){
 		std::cerr << "Usage: blgmd <input> <output>" << std::endl;
 		return 1;
 	}
 	input_stream = new std::ifstream(argv[1]);
-	output_stream = new std::ofstream(argv[2]);
+	if(argc>2)
+		output_stream = new std::ofstream(argv[2]);
+	else
+		output_stream = &std::cout;
 	if(!input_stream||input_stream->bad()){
 		std::cerr << "Bad input stream!"<<std::endl;
 		return 2;
@@ -49,6 +52,7 @@ int main(int argc,const char **argv){
 
 	
 	delete input_stream;
-	delete output_stream;
+	if(output_stream != &std::cout)
+		delete output_stream;
 	return 0;
 }
