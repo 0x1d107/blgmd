@@ -7,6 +7,8 @@
 
 #define ITEX2MML_VERSION "1.6.1"
 
+#include <stdlib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

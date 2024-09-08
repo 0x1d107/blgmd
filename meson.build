@@ -16,6 +16,7 @@ src+=[
 	'md4c-html.c',
 ]
 
-
+subdir('itex-src')
+deps+=itex_dep
 
 executable('blgmd',src,dependencies:deps)
