@@ -28,11 +28,11 @@ int main(int argc,const char **argv){
 		output_stream = new std::ofstream(argv[2]);
 	else
 		output_stream = &std::cout;
-	if(!input_stream||input_stream->bad()){
+	if(!input_stream||input_stream->fail()){
 		std::cerr << "Bad input stream!"<<std::endl;
 		return 2;
 	}
-	if(!output_stream||output_stream->bad()){
+	if(!output_stream||output_stream->fail()){
 		std::cerr << "Bad output stream!"<<std::endl;
 		return 2;
 	}
@@ -42,6 +42,10 @@ int main(int argc,const char **argv){
 	size_t filesize = input_stream->tellg();
 	if(!filesize){
 		std::cerr<<"Bad input file size!"<<std::endl;
+		return 2;
+	}
+	if(!input_stream||input_stream->bad()){
+		std::cerr << "Bad input stream!"<<std::endl;
 		return 2;
 	}
 	input_string.resize(filesize);

@@ -33,9 +33,13 @@ void render_verbatim(MD_HTML* r, const MD_CHAR* text, MD_SIZE size);
 
 
 extern char MATHML_DISPLAY;
+extern const char *CODE_LANG;
+extern int CODE_LANG_SZ;
 
-void highlight_code(MD_HTML* r, const MD_CHAR* data, MD_SIZE size);	
-void render_mathml(MD_HTML* r, const MD_CHAR* data, MD_SIZE size);	
+void highlight_code(MD_HTML* r);	
+void highlight_append(MD_HTML *r, const MD_CHAR *text, MD_SIZE size);
+void mathml_append(MD_HTML* r, const MD_CHAR* data, MD_SIZE size);	
+void render_mathml(MD_HTML* r);	
 
 
 

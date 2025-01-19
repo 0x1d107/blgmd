@@ -367,7 +367,9 @@ enter_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
         case MD_BLOCK_LI:       render_open_li_block(r, (const MD_BLOCK_LI_DETAIL*)detail); break;
         case MD_BLOCK_HR:       RENDER_VERBATIM(r, (r->flags & MD_HTML_FLAG_XHTML) ? "<hr />\n" : "<hr>\n"); break;
         case MD_BLOCK_H:        RENDER_VERBATIM(r, head[((MD_BLOCK_H_DETAIL*)detail)->level - 1]); break;
-        case MD_BLOCK_CODE:     render_open_code_block(r, (const MD_BLOCK_CODE_DETAIL*) detail); break;
+        case MD_BLOCK_CODE:     CODE_LANG= ((const MD_BLOCK_CODE_DETAIL*)detail)->lang.text;
+								CODE_LANG_SZ=((const MD_BLOCK_CODE_DETAIL*)detail)->lang.size; 
+								break;
         case MD_BLOCK_HTML:     /* noop */ break;
         case MD_BLOCK_P:        RENDER_VERBATIM(r, "<p>"); break;
         case MD_BLOCK_TABLE:    RENDER_VERBATIM(r, "<table>\n"); break;
@@ -395,7 +397,7 @@ leave_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
         case MD_BLOCK_LI:       RENDER_VERBATIM(r, "</li>\n"); break;
         case MD_BLOCK_HR:       /*noop*/ break;
         case MD_BLOCK_H:        RENDER_VERBATIM(r, head[((MD_BLOCK_H_DETAIL*)detail)->level - 1]); break;
-        case MD_BLOCK_CODE:     RENDER_VERBATIM(r, "</code></pre>\n"); break;
+        case MD_BLOCK_CODE:     highlight_code(r); CODE_LANG=NULL; break;
         case MD_BLOCK_HTML:     /* noop */ break;
         case MD_BLOCK_P:        RENDER_VERBATIM(r, "</p>\n"); break;
         case MD_BLOCK_TABLE:    RENDER_VERBATIM(r, "</table>\n"); break;
@@ -469,7 +471,7 @@ leave_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
         case MD_SPAN_CODE:              RENDER_VERBATIM(r, "</code>"); break;
         case MD_SPAN_DEL:               RENDER_VERBATIM(r, "</del>"); break;
         case MD_SPAN_LATEXMATH:         /*fall through*/
-        case MD_SPAN_LATEXMATH_DISPLAY: RENDER_VERBATIM(r, "</x-equation>"); break;
+        case MD_SPAN_LATEXMATH_DISPLAY: render_mathml(r); RENDER_VERBATIM(r, "</x-equation>"); break;
         case MD_SPAN_WIKILINK:          RENDER_VERBATIM(r, "</x-wikilink>"); break;
     }
 
@@ -490,8 +492,8 @@ text_callback(MD_TEXTTYPE type, const MD_CHAR* text, MD_SIZE size, void* userdat
         case MD_TEXT_SOFTBR:    RENDER_VERBATIM(r, (r->image_nesting_level == 0 ? "\n" : " ")); break;
         case MD_TEXT_HTML:      render_verbatim(r, text, size); break;
         case MD_TEXT_ENTITY:    render_entity(r, text, size, render_html_escaped); break;
-		case MD_TEXT_CODE:		highlight_code(r,text,size); break;
-		case MD_TEXT_LATEXMATH:	render_mathml(r,text,size); break;
+		case MD_TEXT_CODE:		highlight_append(r,text,size); break;
+		case MD_TEXT_LATEXMATH:	mathml_append(r,text,size); break;
         default:                render_html_escaped(r, text, size); break;
     }
 

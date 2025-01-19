@@ -12,7 +12,8 @@ $$\hat{f}(\omega) = \int_{-\infty}^{\infty} f(x) e^{-2\pi i}\, dx$$
 
 Or its discrete variant
 
-$$\hat{f}[k] = \sum_{n=0}^{N-1} f[k] e^{\frac{-2\pi i k n }{ N}}$$
+$$\hat{f}[k] = 
+\sum_{n=0}^{N-1} f[k] e^{\frac{-2\pi i k n }{ N}}$$
 
 But the *Fourier transform* only tells you what frequencies are present in the entire signal.
 
@@ -59,7 +60,7 @@ $$x(n) = \frac{\sum_{m=-\infty}^{\infty}y(m,n)w(m - n)}{\sum_{m=-\infty}^{\infty
 
 Here's a simple python implementation of the algorithm:
 
-```py
+```python
 def istft(spectogram, nperseg, noverlap):
     window = np.hanning(nperseg)
     window_step = nperseg - noverlap
