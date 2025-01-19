@@ -12,6 +12,7 @@ src=[
 src+=[
 	'entity.c',
 	'md4c-html.c',
+	'mini-mustach.c'
 ]
 
 subdir('itex-src')
