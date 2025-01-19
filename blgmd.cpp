@@ -2,7 +2,9 @@
 #include <md4c-html.h>
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <fstream>
+#include <unordered_map>
 
 std::istream *input_stream = nullptr;
 std::ostream *output_stream = nullptr;
@@ -18,12 +20,13 @@ void process_output(const MD_CHAR *out,MD_SIZE size, void *userdata){
 }
 const unsigned int parser_flags=MD_FLAG_LATEXMATHSPANS |MD_FLAG_TABLES;
 const unsigned int render_flags=MD_HTML_FLAG_XHTML;
+std::unordered_map<std::string,std::string> metadata_map;
 int main(int argc,const char **argv){
 	if(argc<2){
-		std::cerr << "Usage: blgmd <input> <output>" << std::endl;
-		return 1;
+		input_stream = &std::cin;
+	}else{
+		input_stream = new std::ifstream(argv[1]);
 	}
-	input_stream = new std::ifstream(argv[1]);
 	if(argc>2)
 		output_stream = new std::ofstream(argv[2]);
 	else
@@ -36,26 +39,33 @@ int main(int argc,const char **argv){
 		std::cerr << "Bad output stream!"<<std::endl;
 		return 2;
 	}
+
+	std::ostringstream input_ss;
+	std::string line;
+
+	while(std::getline(*input_stream,line)){
 	
-	std::string input_string;
-	input_stream->seekg(0,std::ios::end);
-	size_t filesize = input_stream->tellg();
-	if(!filesize){
-		std::cerr<<"Bad input file size!"<<std::endl;
-		return 2;
+		std::stringstream liness(line);
+		std::string key,value;
+		std::getline(liness,key,':');
+		std::getline(liness,value);
+		metadata_map[key] = value;
+
+		
+		if(!line.size())
+			break;
+		
 	}
-	if(!input_stream||input_stream->bad()){
-		std::cerr << "Bad input stream!"<<std::endl;
-		return 2;
+	while(std::getline(*input_stream,line)){
+		input_ss << line<<std::endl;
 	}
-	input_string.resize(filesize);
-	input_stream->seekg(0,std::ios::beg);
-	input_stream->read(&input_string[0],input_string.size());	
+	
+	const std::string &input_string = input_ss.str();
 
 	md_html(input_string.c_str(),input_string.size(),process_output,NULL,parser_flags,render_flags);
 
-	
-	delete input_stream;
+	if(input_stream != &std::cin)
+		delete input_stream;
 	if(output_stream != &std::cout)
 		delete output_stream;
 	return 0;
