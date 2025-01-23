@@ -4,17 +4,16 @@
 #include <string>
 #include <sstream>
 #include <fstream>
-#include <unordered_map>
 #include <unistd.h>
+#include <inja/inja.hpp>
 
-#include "mini-mustach.h"
 
 std::istream *input_stream = nullptr;
 std::ostream *output_stream = nullptr;
 
 
 void print_usage(){
-std::cerr << "Usage: blgmd [-X metadata] [-i <input>] [-o output]"<<std::endl;
+std::cerr << "Usage: blgmd [-X metadata | -i input | -o output | -t template] ... "<<std::endl;
 exit(10);
 }
 void process_output(const MD_CHAR *out,MD_SIZE size, void *userdata){
@@ -27,11 +26,14 @@ void process_output(const MD_CHAR *out,MD_SIZE size, void *userdata){
 }
 const unsigned int parser_flags=MD_FLAG_LATEXMATHSPANS |MD_FLAG_TABLES;
 const unsigned int render_flags=MD_HTML_FLAG_XHTML;
-std::unordered_map<std::string,std::string> metadata_map;
+inja::json metadata;
+inja::Environment env;
+inja::Template tmpl;
 int main(int argc,char *argv[]){
 	int c;
 	char *metakey=NULL;
-	while((c = getopt(argc,argv,"i:o:X:"))!=-1){
+	char *tmpl_file=NULL;
+	while((c = getopt(argc,argv,"i:o:X:t:h"))!=-1){
 		switch(c){
 			case 'i':
 			input_stream = new std::ifstream(optarg);
@@ -42,6 +44,10 @@ int main(int argc,char *argv[]){
 			case 'X':
 			metakey=optarg;
 			break;
+			case 't':
+			tmpl_file=optarg;
+			break;
+			case 'h':
 			default:
 			print_usage();
 			
@@ -77,7 +83,7 @@ int main(int argc,char *argv[]){
 		std::string key,value;
 		std::getline(liness,key,':');
 		std::getline(liness,value);
-		metadata_map[key] = value;
+		metadata[key]=value;
 
 		
 		if(!line.size())
@@ -85,8 +91,14 @@ int main(int argc,char *argv[]){
 		
 	}
 	if(metakey){
-		std::cout <<metadata_map[std::string(metakey)];
+		std::cout <<metadata[std::string(metakey)];
 		return 0;
+	}
+	std::ostream *render_output_stream=nullptr;
+	if(tmpl_file){
+		tmpl = env.parse_file(std::string(tmpl_file));
+		render_output_stream=output_stream;
+		output_stream = new std::stringstream();
 	}
 	while(std::getline(*input_stream,line)){
 		input_ss << line<<std::endl;
@@ -95,6 +107,11 @@ int main(int argc,char *argv[]){
 	const std::string &input_string = input_ss.str();
 
 	md_html(input_string.c_str(),input_string.size(),process_output,NULL,parser_flags,render_flags);
+
+	if(tmpl_file){
+		metadata["html"] = ((std::stringstream *)output_stream)->str();
+		env.render_to(*render_output_stream,tmpl,metadata);
+	}
 
 	if(input_stream != &std::cin)
 		delete input_stream;

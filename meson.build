@@ -12,10 +12,12 @@ src=[
 src+=[
 	'entity.c',
 	'md4c-html.c',
-	'mini-mustach.c'
 ]
 
 subdir('itex-src')
 deps+=itex_dep
+inja_proj = subproject('inja')
+inja_dep = inja_proj.get_variable('inja_dep')
+deps+=inja_dep
 
 executable('blgmd',src,dependencies:deps)
