@@ -1,3 +1,5 @@
+#include <cerrno>
+#include <cstring>
 #include <md4c.h>
 #include <md4c-html.h>
 #include <iostream>
@@ -5,7 +7,9 @@
 #include <sstream>
 #include <fstream>
 #include <unistd.h>
+#include <cstdlib>
 #include <inja/inja.hpp>
+#include <SQLiteCpp/SQLiteCpp.h>
 
 
 std::istream *input_stream = nullptr;
@@ -13,8 +17,8 @@ std::ostream *output_stream = nullptr;
 
 
 void print_usage(){
-std::cerr << "Usage: blgmd [-X metadata | -i input | -o output | -t template] ... "<<std::endl;
-exit(10);
+	std::cerr << "Usage: blgmd [-X metadata | -i input | -o output | -t template] ... "<<std::endl;
+	exit(10);
 }
 void process_output(const MD_CHAR *out,MD_SIZE size, void *userdata){
 	
@@ -29,17 +33,28 @@ const unsigned int render_flags=MD_HTML_FLAG_XHTML;
 inja::json metadata;
 inja::Environment env;
 inja::Template tmpl;
+SQLite::Database *metaDB = nullptr;
+SQLite::Statement *meta_update_stmt=nullptr;
+const char *SQL_CREATE_METADATA = "CREATE TABLE IF NOT EXISTS metadata(filename TEXT, key TEXT, value TEXT,UNIQUE (filename,key));";
+const char *SQL_UPDATE_METADATA = "REPLACE INTO metadata(filename,key,value) VALUES (?,?,?)";
+
+
 int main(int argc,char *argv[]){
 	int c;
 	char *metakey=NULL;
 	char *tmpl_file=NULL;
-	while((c = getopt(argc,argv,"i:o:X:t:h"))!=-1){
+	char *dbfile= NULL;
+	const char *input_file = "-";
+	const char *output_file = "-";
+	while((c = getopt(argc,argv,"i:o:X:t:hd:"))!=-1){
 		switch(c){
 			case 'i':
 			input_stream = new std::ifstream(optarg);
+			input_file = optarg;
 			break;
 			case 'o':
 			output_stream = new std::ofstream(optarg);
+			output_file = optarg;
 			break;
 			case 'X':
 			metakey=optarg;
@@ -47,12 +62,14 @@ int main(int argc,char *argv[]){
 			case 't':
 			tmpl_file=optarg;
 			break;
+			case 'd':
+			dbfile = optarg;
+			break;
+
 			case 'h':
 			default:
 			print_usage();
 			
-
-
 		}
 
 
@@ -75,20 +92,30 @@ int main(int argc,char *argv[]){
 
 	std::ostringstream input_ss;
 	std::string line;
-
+	if(dbfile){
+		metaDB = new SQLite::Database (dbfile,SQLite::OPEN_CREATE| SQLite::OPEN_READWRITE);
+		metaDB->exec(SQL_CREATE_METADATA);
+		meta_update_stmt = new SQLite::Statement(*metaDB,SQL_UPDATE_METADATA);
+	}	
 
 	while(std::getline(*input_stream,line)){
-	
 		std::stringstream liness(line);
 		std::string key,value;
 		std::getline(liness,key,':');
 		std::getline(liness,value);
-		metadata[key]=value;
-
-		
 		if(!line.size())
 			break;
-		
+		metadata[key]=value;
+		if(meta_update_stmt){
+			meta_update_stmt->bind(1,input_file);
+			meta_update_stmt->bind(2,key);
+			meta_update_stmt->bind(3,value);
+			meta_update_stmt->exec();
+			meta_update_stmt->reset();
+		}
+	}
+	if(meta_update_stmt){
+		delete meta_update_stmt;
 	}
 	if(metakey){
 		std::cout <<metadata[std::string(metakey)];
@@ -117,5 +144,7 @@ int main(int argc,char *argv[]){
 		delete input_stream;
 	if(output_stream != &std::cout)
 		delete output_stream;
+	if(metaDB)
+		delete metaDB;
 	return 0;
 }
