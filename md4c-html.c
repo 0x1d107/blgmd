@@ -352,7 +352,7 @@ render_open_wikilink_span(MD_HTML* r, const MD_SPAN_WIKILINK_DETAIL* det)
 /**************************************
  ***  HTML renderer implementation  ***
  **************************************/
-
+static int INSIDE_CODE_BLOCK = 0; 
 static int
 enter_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
 {
@@ -369,6 +369,7 @@ enter_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
         case MD_BLOCK_H:        RENDER_VERBATIM(r, head[((MD_BLOCK_H_DETAIL*)detail)->level - 1]); break;
         case MD_BLOCK_CODE:     CODE_LANG= ((const MD_BLOCK_CODE_DETAIL*)detail)->lang.text;
 								CODE_LANG_SZ=((const MD_BLOCK_CODE_DETAIL*)detail)->lang.size; 
+								INSIDE_CODE_BLOCK=1; 
 								break;
         case MD_BLOCK_HTML:     /* noop */ break;
         case MD_BLOCK_P:        RENDER_VERBATIM(r, "<p>"); break;
@@ -397,7 +398,10 @@ leave_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
         case MD_BLOCK_LI:       RENDER_VERBATIM(r, "</li>\n"); break;
         case MD_BLOCK_HR:       /*noop*/ break;
         case MD_BLOCK_H:        RENDER_VERBATIM(r, head[((MD_BLOCK_H_DETAIL*)detail)->level - 1]); break;
-        case MD_BLOCK_CODE:     highlight_code(r); CODE_LANG=NULL; break;
+        case MD_BLOCK_CODE:     highlight_code(r); 
+								CODE_LANG=NULL;
+								INSIDE_CODE_BLOCK = 0;
+								break;
         case MD_BLOCK_HTML:     /* noop */ break;
         case MD_BLOCK_P:        RENDER_VERBATIM(r, "</p>\n"); break;
         case MD_BLOCK_TABLE:    RENDER_VERBATIM(r, "</table>\n"); break;
@@ -492,7 +496,12 @@ text_callback(MD_TEXTTYPE type, const MD_CHAR* text, MD_SIZE size, void* userdat
         case MD_TEXT_SOFTBR:    RENDER_VERBATIM(r, (r->image_nesting_level == 0 ? "\n" : " ")); break;
         case MD_TEXT_HTML:      render_verbatim(r, text, size); break;
         case MD_TEXT_ENTITY:    render_entity(r, text, size, render_html_escaped); break;
-		case MD_TEXT_CODE:		highlight_append(r,text,size); break;
+		case MD_TEXT_CODE:		if(INSIDE_CODE_BLOCK){
+									highlight_append(r,text,size); 
+								}else{
+									render_verbatim(r, text, size);
+								}
+								break;
 		case MD_TEXT_LATEXMATH:	mathml_append(r,text,size); break;
         default:                render_html_escaped(r, text, size); break;
     }
