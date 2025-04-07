@@ -44,9 +44,10 @@ int main(int argc,char *argv[]){
 	char *metakey=NULL;
 	char *tmpl_file=NULL;
 	char *dbfile= NULL;
+	bool parse_meta = true;
 	const char *input_file = "-";
 	const char *output_file = "-";
-	while((c = getopt(argc,argv,"i:o:X:t:hd:"))!=-1){
+	while((c = getopt(argc,argv,"i:o:X:t:hd:N"))!=-1){
 		switch(c){
 			case 'i':
 			input_stream = new std::ifstream(optarg);
@@ -65,7 +66,9 @@ int main(int argc,char *argv[]){
 			case 'd':
 			dbfile = optarg;
 			break;
-
+			case 'N':
+			parse_meta =false;
+			break;
 			case 'h':
 			default:
 			print_usage();
@@ -98,7 +101,7 @@ int main(int argc,char *argv[]){
 		meta_update_stmt = new SQLite::Statement(*metaDB,SQL_UPDATE_METADATA);
 	}	
 
-	while(std::getline(*input_stream,line)){
+	while(parse_meta&&std::getline(*input_stream,line)){
 		std::stringstream liness(line);
 		std::string key,value;
 		std::getline(liness,key,':');
