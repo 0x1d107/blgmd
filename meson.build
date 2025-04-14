@@ -16,9 +16,8 @@ src+=[
 
 subdir('itex-src')
 deps+=itex_dep
-inja_proj = subproject('inja')
-inja_dep = inja_proj.get_variable('inja_dep')
-deps+=inja_dep
+boost_regex_dep = dependency('boost',modules:['regex'])
+deps+= boost_regex_dep
 sqcpp_proj = subproject('sqlitecpp')
 sqcpp_dep = sqcpp_proj .get_variable('sqlitecpp_dep')
 deps+=sqcpp_dep

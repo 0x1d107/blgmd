@@ -8,7 +8,9 @@
 #include <fstream>
 #include <unistd.h>
 #include <cstdlib>
-#include <inja/inja.hpp>
+#include <unordered_map>
+#include <boost/regex.hpp>
+#include <boost/function.hpp>
 #include <SQLiteCpp/SQLiteCpp.h>
 
 
@@ -30,14 +32,18 @@ void process_output(const MD_CHAR *out,MD_SIZE size, void *userdata){
 }
 const unsigned int parser_flags=MD_FLAG_LATEXMATHSPANS |MD_FLAG_TABLES;
 const unsigned int render_flags=MD_HTML_FLAG_XHTML;
-inja::json metadata;
-inja::Environment env;
-inja::Template tmpl;
+std::unordered_map<std::string,std::string> metadata;
 SQLite::Database *metaDB = nullptr;
 SQLite::Statement *meta_update_stmt=nullptr;
 const char *SQL_CREATE_METADATA = "CREATE TABLE IF NOT EXISTS metadata(filename TEXT, key TEXT, value TEXT,UNIQUE (filename,key));";
 const char *SQL_UPDATE_METADATA = "REPLACE INTO metadata(filename,key,value) VALUES (?,?,?)";
 
+struct KVFormatter {
+	std::string operator()(std::string key){
+		return metadata[key];
+
+	}
+};
 
 int main(int argc,char *argv[]){
 	int c;
@@ -124,23 +130,34 @@ int main(int argc,char *argv[]){
 		std::cout <<metadata[std::string(metakey)];
 		return 0;
 	}
-	std::ostream *render_output_stream=nullptr;
-	if(tmpl_file){
-		tmpl = env.parse_file(std::string(tmpl_file));
-		render_output_stream=output_stream;
-		output_stream = new std::stringstream();
-	}
 	while(std::getline(*input_stream,line)){
 		input_ss << line<<std::endl;
 	}
-	
 	const std::string &input_string = input_ss.str();
 
-	md_html(input_string.c_str(),input_string.size(),process_output,NULL,parser_flags,render_flags);
 
 	if(tmpl_file){
-		metadata["html"] = ((std::stringstream *)output_stream)->str();
-		env.render_to(*render_output_stream,tmpl,metadata);
+		std::ifstream tmpl(tmpl_file);
+		std::string line;
+		boost::regex variable_re("$$([a-zA-Z0-9]*)$$");
+		std::ostream_iterator<char> osit(*output_stream);
+		while(std::getline(tmpl,line)){
+			if(line == "<!--html-->")
+				md_html(input_string.c_str(),input_string.size(),process_output,NULL,parser_flags,render_flags);
+			else{
+				std::function<std::string(const boost::smatch &key)> cbk = [](const boost::smatch &key){
+					return metadata[key.str()];
+				}; 
+				boost::regex_replace(osit,line.begin(),line.end(),variable_re,cbk);
+				//*output_stream << line<<std::endl;
+			}
+		}
+
+
+	}else{
+		// Render markdown
+
+		md_html(input_string.c_str(),input_string.size(),process_output,NULL,parser_flags,render_flags);
 	}
 
 	if(input_stream != &std::cin)
