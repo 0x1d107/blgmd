@@ -38,12 +38,10 @@ SQLite::Statement *meta_update_stmt=nullptr;
 const char *SQL_CREATE_METADATA = "CREATE TABLE IF NOT EXISTS metadata(filename TEXT, key TEXT, value TEXT,UNIQUE (filename,key));";
 const char *SQL_UPDATE_METADATA = "REPLACE INTO metadata(filename,key,value) VALUES (?,?,?)";
 
-struct KVFormatter {
-	std::string operator()(std::string key){
-		return metadata[key];
+std::string metadata_fmt(boost::smatch key){
+	return metadata[key.str(1)];
 
-	}
-};
+}
 
 int main(int argc,char *argv[]){
 	int c;
@@ -139,7 +137,7 @@ int main(int argc,char *argv[]){
 	if(tmpl_file){
 		std::ifstream tmpl(tmpl_file);
 		std::string line;
-		boost::regex variable_re("$$([a-zA-Z0-9]*)$$");
+		boost::regex variable_re("{{([a-zA-Z0-9]*)}}");
 		std::ostream_iterator<char> osit(*output_stream);
 		while(std::getline(tmpl,line)){
 			if(line == "<!--html-->")
@@ -148,8 +146,8 @@ int main(int argc,char *argv[]){
 				std::function<std::string(const boost::smatch &key)> cbk = [](const boost::smatch &key){
 					return metadata[key.str()];
 				}; 
-				boost::regex_replace(osit,line.begin(),line.end(),variable_re,cbk);
-				//*output_stream << line<<std::endl;
+				line = boost::regex_replace(line,variable_re,metadata_fmt);
+				*output_stream << line<<std::endl;
 			}
 		}
 

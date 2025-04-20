@@ -1,3 +1,0 @@
-[submodule "subprojects/inja"]
-	path = subprojects/inja
-	url = https://github.com/pantor/inja.git
