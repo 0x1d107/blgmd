@@ -1,4 +1,4 @@
--- Create files for each tag with a list of posts
+-- Create files for each tag with a list of posts that tagged with the tag
 with RECURSIVE split_tags(filename,tag,tail) as (
 	select filename,'',value||',' from metadata where key='tags'
 	UNION ALL SELECT filename,trim(substr(tail,0,instr(tail,','))),substr(tail,instr(tail,',')+1) from split_tags where tail != ''
@@ -16,7 +16,7 @@ printf(
 <ul>
 ',tag,tag)
 ||
-string_agg(
+group_concat(
 printf('<li><a href="%s">%s</a></li>',replace(split_tags.filename,'.md','.html'),value),char(10))
 ||
 '</ul> </body></html>'
