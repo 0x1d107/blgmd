@@ -47,6 +47,6 @@ void highlight_code(MD_HTML *r){
 	hl.highlight(hlbuf,oss_hlcode,mapped);
 	hlbuf = std::stringstream();
 	std::string hlcode = oss_hlcode.str();
-	render_verbatim(r,hlcode.c_str(),hlcode.size()+1);
+	render_verbatim(r,hlcode.c_str(),hlcode.size());
 }
 
