@@ -17,11 +17,12 @@ printf(
 ',tag,tag)
 ||
 group_concat(
-printf('<li><a href="%s">%s</a></li>',replace(split_tags.filename,'.md','.html'),value),char(10))
+printf('<li><a href="%s">%s</a></li>',replace(split_tags.filename,'.md','.html'),metadata.value),char(10))
 ||
 '</ul> </body></html>'
 )
 from split_tags 
-left join metadata on split_tags.filename = metadata.filename and key = 'title'
-where tag != '' group by tag 
+left join metadata on split_tags.filename = metadata.filename and metadata.key = 'title'
+left join metadata as Mdate on split_tags.filename = Mdate.filename and Mdate.key = 'date'
+where tag != '' group by tag order by Mdate.value
 ;
